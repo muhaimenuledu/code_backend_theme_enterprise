@@ -2,6 +2,7 @@
 
 import { NavBar } from '@web/webclient/navbar/navbar';
 import { patch } from "@web/core/utils/patch";
+
 import { onMounted, useRef, onWillUnmount } from "@odoo/owl";
 
 patch(NavBar.prototype, {
@@ -19,9 +20,6 @@ patch(NavBar.prototype, {
 
         onMounted(() => {
             this.addEventListeners();
-            this.openSidebar(); // Sidebar open by default
-            this.closeElement?.el?.style.setProperty('display', 'block'); // Always show close arrow
-            this.openElement?.el?.style.setProperty('display', 'none');  // Hide open arrow by default
         });
 
         onWillUnmount(() => {
@@ -111,19 +109,29 @@ patch(NavBar.prototype, {
     },
 
     handleSidebarLinkClick(event) {
+        const closeSidebarElement = this.closeElement?.el;
+        if (closeSidebarElement) closeSidebarElement.style.display = 'none';
+
+        if (this.topHeading?.el?.nodeType === Node.ELEMENT_NODE) {
+            Object.assign(this.topHeading.el.style, {
+                marginLeft: '0px',
+                width: '100%',
+            });
+        }
+
         const li = event.currentTarget;
         const a = li.firstElementChild;
-        const id = a?.getAttribute('data-id');
+        const id = a.getAttribute('data-id');
         if (id) {
             document.querySelector('header').className = id;
         }
 
+        // Remove 'active' class from all links
         Array.from(this.sidebarLinks?.el?.children || []).forEach(li => {
-            li.firstElementChild?.classList.remove('active');
+            li.firstElementChild.classList.remove('active');
         });
 
-        a?.classList.add('active');
-
-        // Sidebar stays open
+        a.classList.add('active');
+        this.closeSidebar();
     },
 });
